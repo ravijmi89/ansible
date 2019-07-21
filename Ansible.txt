@@ -1,0 +1,170 @@
+﻿Ansible:
+===========================================================================
+1. What is Ansible?
+     Ansible is a configuration management tool like puppet and chef. Agent less configuration management tool.Ansible is totally relies on ssh tcp 
+     connection. Ansible is a very simple IT automation engine that automates provisioning, configuration, application deployment, intra-service 
+     orchestration and many IT needs. Ansible uses push mechanism
+2. Feature of Ansible.
+     • Open Source
+     • Written in Python
+     • Easy Installation and configuration.
+     • High sclable
+     • Agentless client configuration	
+3. Requirement of Ansible.
+     • Password less ssh connection client
+     • Python (PyYAML, Jinja2)
+4. Component of Ansible
+     • Program
+        - Ansible
+        - Ansible-doc
+        - Ansible-Palybook
+        - Ansible-Pull
+     • Modules
+        - Perform system configuration and management example modules copy, service, file, yum, user, group.
+5. Ansible Configuration files.
+     • Main folder of Configuration files
+     /etc/ansible/
+    ├── ansible.cfg
+    ├── hosts
+    └── roles
+===========================================================================
+Ansible topics:
+     •  Installation and configuration process
+     •  Inventory
+     •  Ansible Modules
+     • Ad-hoc commands,
+     • Task automation using playbooks
+     • Ansible roles
+     • Ansible vault
+     •  Ansible and AWS
+ 
+        Ansible uses the concept of Inventory to manage and track the target machines. By default, this file is located in /etc/ansible/hosts and can be changed as well. 
+       A host file consists of groups for better classification and multiple machines under the group. All the required machines can be added to those groups.
+       Every group is denoted by a square bracket and a group name within. A server can actually exist in multiple groups. Edit the inventory file /etc/ansible/hosts 
+       and add all the servers which need to be managed.
+
+       • To list the hosts in the inventory file, you can run the below command
+          $ ansible --list-hosts all or $ ansible webservers --list-hosts
+
+===========================================================================
+Important terms in Ansible
+
+       • Controller Machine:  This is where your ansible gets installed, your controller machine helps in enabling the provisioning on the servers that you manage.
+       • Inventory: This is basically an initializing file which contains information about the servers that you are managing.
+       • Playbook: An organized unit of scripts which defines an automated work for the configuration management of your server.
+       • Task: Task block defines a single procedure to be executed on server, like installing the packages.
+===========================================================================
+Ansible Modules
+
+       Modules are the main building blocks of Ansible and are basically reusable scripts that are used by Ansible playbooks. Ansible comes with a number of reusable modules. 
+       These include functionality for controlling services, software package installation, working with files and directories etc.
+
+    - Setup Module
+           To get information about the network or hardware or OS version or memory related information the setup module will help to gather the same about the target machines. 
+           On the control, the machine runs the below command.
+            
+           $ ansible webservers –m setup
+
+     -  Command Module
+              The command module simply executes a specific command on the target machine and gives the output.
+             $ ansible webservers –m command - a ‘uptime’
+             $ ansible webservers –m command –a ‘hostname’
+
+    - Shell Module
+            To execute any command in the shell of your choice you can use the Shell module. The shell module commands are run in /bin/sh shell and you can make use of the 
+            operators like ‘>’ or ‘|’ (pipe symbol or even environment variables. So primarily the difference between the Shell and Command module is that if you actually 
+            do not need to use the operators like the ones mentioned then you could use the command module.
+            
+           $ ansible webservers -m shell -a 'ls -l > temp.txt'
+            $ ansible webservers –m command -a ‘cat temp.txt’
+
+       - User Module
+            Using this module one can create or delete users.
+            $ ansible webservers -m user -a 'name=user1 password=user1' --become
+            $ ansible webservers -m user -a 'name=user1 state=absent' --become
+             Options:  become – Privilege to the superuser to run the command   state=absent to delete the user
+
+         - File Module
+            This module is used to create files, directories, set, or change file permissions and ownership etc
+             Example 1: Create a file 
+             $ ansible webservers -m file -a 'dest=/home/ansible/niranjan.txt state=touch mode=600 owner=ansible group=ansible'
+             $ ansible webservers -m file -a "dest=/home/ansible/vndir state=directory mode=755"
+             $ ansible webservers -m file -a "dest=/home/ansible/niranjan.txt state=absent"
+             $ ansible webservers -m file -a "dest=/home/ansible/vndir state=absent"
+
+         - Copy Module
+             It is used for copying files to multiple target machines.
+             $ ansible webservers -m copy -a "src=sample.txt dest=/home/ansible/sample.txt"
+
+          - Managing Software Packages
+             If you need to install software packages through ‘yum’ or ‘apt’ you can use the below commands.
+              $ ansible webservers –m yum -a “name=git state=present” --become
+
+           - Managing Services Module
+               To manage services with ansible, we use a module ‘service’.
+                $ ansible webservers -m service -a “name=httpd state=started” --become
+                $ ansible webservers -m service -a “name=httpd state=stopped” --become
+                $ ansible webservers -m service -a “name=httpd state=restarted --become
+===========================================================================
+Ansible Ad-hoc Command
+
+The Ad-Hoc command is the one-liner ansible command that performs one task on the target host. 
+It allows you to execute simple one-line task against one or group of hosts defined on the inventory file configuration.
+An Ad-Hoc command will only have two parameters, the group of a host that you want to perform the task and the Ansible module to run.
+The Ad-Hoc command gives you more advantage for exploring ansible itself. You are able to perform tasks without creating a playbook first, 
+such as rebooting servers, managing services, editing the line configuration, copy a file to only one host, install only one package.
+
+1. Basic Command
+     $ ansible all -m ping
+
+     • The first parameter 'all' for all hosts on the inventory file.
+     • The second parameter inside the '-m' option for the module, running the ping module.
+
+2. Filter Hosts Group and Single Host
+
+       $ ansible all -m setup -a "filter=ansible_distribution*"
+
+If you're using the custom inventory file, add the '-i' option followed the inventory file name.
+      $ ansible all -i hosts -m setup -a "filter=ansible_distribution*"
+
+3. Privilege Escalation
+The ansible provides features for the privilege escalation against servers. If you want to run the ad-hoc command 
+as a non-root user, you can use the '--become' option to get the root privileges and the '-K' option to prompt the password.
+
+    $ ansible all -m shell -a 'fdisk -l' -u root --become -K
+
+4. Upload File to Host
+
+  $ansible all -m copy -a 'src=/root/test dest=/tmp/ owner=root mode=0644' -u root --become -K
+
+5. Download File from the Host
+    $ ansible all -m fetch -a 'src=/etc/sudoers.d/hakase dest=/home/hakase/backup/hakase-sudoers flat=yes'
+6. Update Repository and Upgrade Packages
+
+  $ansible all -m yum -a 'name=nginx state=latest' --become
+  $ansible all -m yum -a 'name=nginx state=absent purge=yes' --become
+
+The example below is removing the nginx package and purge all configuration related and then remove all unused packages on the system.
+  $ansible all -m yum -a 'name=nginx state=absent purge=yes autoremove=yes' --become
+  $ansible all -m service -a 'name=nginx state=started enabled=yes' --become
+  $ ansible all -m shell -a 'df -h /dev/sda2' --become
+
+Shell vs. Command
+
+A typical example are the Ansible modules Shell and Command. In the most use cases both modules lead to the same goal. Here are the main differences between these modules.
+With the Command module the command will be executed without being proceeded through a shell. As a consequence some variables like $HOME are not available. And also stream operations like  <, >, | and & will not work. The Shell module runs a command through a shell, by default /bin/sh. This can be changed with the option executable. Piping and redirection are here therefor available.
+The command module is more secure, because it will not be affected by the user’s environment.
+===========================================================================
+
+
+
+
+
+
+
+
+
+
+
+
+
